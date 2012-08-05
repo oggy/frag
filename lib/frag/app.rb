@@ -14,16 +14,16 @@ module Frag
       parser = OptionParser.new do |parser|
         parser.banner = "USAGE: #$0 [options] file ..."
 
-        parser.on '-b', '--begin TOKEN' do |value|
+        parser.on '-b', '--begin DELIMITER' do |value|
           beginning = Regexp.escape(value)
         end
-        parser.on '-e', '--end TOKEN' do |value|
+        parser.on '-e', '--end DELIMITER' do |value|
           ending = Regexp.escape(value)
         end
-        parser.on '-l', '--leader TOKEN' do |value|
+        parser.on '-l', '--leader STRING' do |value|
           leader = Regexp.escape(value)
         end
-        parser.on '-t', '--trailer TOKEN' do |value|
+        parser.on '-t', '--trailer STRING' do |value|
           trailer = Regexp.escape(value)
         end
       end
