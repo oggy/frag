@@ -14,92 +14,92 @@ describe Frag::App do
   describe "when no options are used" do
     it "populates the delimited region if it's empty" do
       write_file 'input', <<-EOS.demargin
-        |# GEN: echo hi
-        |# ENDGEN
+        |# frag: echo hi
+        |# frag end
       EOS
       frag('input').must_equal 0
       (output.string + error.string).must_equal ''
       File.read('input').must_equal <<-EOS.demargin
-        |# GEN: echo hi
+        |# frag: echo hi
         |hi
-        |# ENDGEN
+        |# frag end
       EOS
     end
 
     it "replaces the delimited region if there's already something there" do
       write_file 'input', <<-EOS.demargin
-        |# GEN: echo new
+        |# frag: echo new
         |old
-        |# ENDGEN
+        |# frag end
       EOS
       frag('input').must_equal 0
       (output.string + error.string).must_equal ''
       File.read('input').must_equal <<-EOS.demargin
-        |# GEN: echo new
+        |# frag: echo new
         |new
-        |# ENDGEN
+        |# frag end
       EOS
     end
 
     it "appends a newline if the command output doesn't end in one" do
       write_file 'input', <<-EOS.demargin
-        |# GEN: echo -n hi
-        |# ENDGEN
+        |# frag: echo -n hi
+        |# frag end
       EOS
       frag('input').must_equal 0
       (output.string + error.string).must_equal ''
       File.read('input').must_equal <<-EOS.demargin
-        |# GEN: echo -n hi
+        |# frag: echo -n hi
         |hi
-        |# ENDGEN
+        |# frag end
       EOS
     end
 
     it "processes multiple regions, and leave surrounding content alone" do
       write_file 'input', <<-EOS.demargin
         |before
-        |# GEN: echo one
-        |# ENDGEN
+        |# frag: echo one
+        |# frag end
         |middle
-        |# GEN: echo two
-        |# ENDGEN
+        |# frag: echo two
+        |# frag end
         |after
       EOS
       frag('input').must_equal 0
       (output.string + error.string).must_equal ''
       File.read('input').must_equal <<-EOS.demargin
         |before
-        |# GEN: echo one
+        |# frag: echo one
         |one
-        |# ENDGEN
+        |# frag end
         |middle
-        |# GEN: echo two
+        |# frag: echo two
         |two
-        |# ENDGEN
+        |# frag end
         |after
       EOS
     end
 
     it "can process multiple files" do
       write_file 'one', <<-EOS.demargin
-        |# GEN: echo one
-        |# ENDGEN
+        |# frag: echo one
+        |# frag end
       EOS
       write_file 'two', <<-EOS.demargin
-        |# GEN: echo two
-        |# ENDGEN
+        |# frag: echo two
+        |# frag end
       EOS
       frag('one', 'two').must_equal 0
       (output.string + error.string).must_equal ''
       File.read('one').must_equal <<-EOS.demargin
-        |# GEN: echo one
+        |# frag: echo one
         |one
-        |# ENDGEN
+        |# frag end
       EOS
       File.read('two').must_equal <<-EOS.demargin
-        |# GEN: echo two
+        |# frag: echo two
         |two
-        |# ENDGEN
+        |# frag end
       EOS
     end
   end
@@ -109,14 +109,14 @@ describe Frag::App do
       it "uses the beginning delimiter given by #{option}" do
         write_file 'input', <<-EOS.demargin
           |# BEGIN echo one
-          |# ENDGEN
+          |# frag end
         EOS
         frag(option, 'BEGIN', 'input').must_equal 0
         (output.string + error.string).must_equal ''
         File.read('input').must_equal <<-EOS.demargin
           |# BEGIN echo one
           |one
-          |# ENDGEN
+          |# frag end
         EOS
       end
     end
@@ -124,13 +124,13 @@ describe Frag::App do
     ['-e', '--end'].each do |option|
       it "uses the ending delimiter given by #{option}" do
         write_file 'input', <<-EOS.demargin
-          |# GEN: echo one
+          |# frag: echo one
           |# END
         EOS
         frag(option, 'END', 'input').must_equal 0
         (output.string + error.string).must_equal ''
         File.read('input').must_equal <<-EOS.demargin
-          |# GEN: echo one
+          |# frag: echo one
           |one
           |# END
         EOS
@@ -140,15 +140,15 @@ describe Frag::App do
     ['-l', '--leader'].each do |option|
       it "uses the delimiter leader given by #{option}" do
         write_file 'input', <<-EOS.demargin
-          |// GEN: echo one
-          |// ENDGEN
+          |// frag: echo one
+          |// frag end
         EOS
         frag(option, '//', 'input').must_equal 0
         (output.string + error.string).must_equal ''
         File.read('input').must_equal <<-EOS.demargin
-          |// GEN: echo one
+          |// frag: echo one
           |one
-          |// ENDGEN
+          |// frag end
         EOS
       end
     end
@@ -156,15 +156,15 @@ describe Frag::App do
     ['-t', '--trailer'].each do |option|
       it "uses the delimiter trailer given by #{option}" do
         write_file 'input', <<-EOS.demargin
-          |# GEN: echo one !!
-          |# ENDGEN !!
+          |# frag: echo one !!
+          |# frag end !!
         EOS
         frag(option, '!!', 'input').must_equal 0
         (output.string + error.string).must_equal ''
         File.read('input').must_equal <<-EOS.demargin
-          |# GEN: echo one !!
+          |# frag: echo one !!
           |one
-          |# ENDGEN !!
+          |# frag end !!
         EOS
       end
     end
@@ -188,21 +188,21 @@ describe Frag::App do
     ['-p', '--backup-prefix'].each do |option|
       it "backs up the input file with the prefix given by #{option}" do
         write_file 'input', <<-EOS.demargin
-          |# GEN: echo new
+          |# frag: echo new
           |old
-          |# ENDGEN
+          |# frag end
         EOS
         frag(option, 'path/to/backups', 'input').must_equal 0
         (output.string + error.string).must_equal ''
         File.read('input').must_equal <<-EOS.demargin
-          |# GEN: echo new
+          |# frag: echo new
           |new
-          |# ENDGEN
+          |# frag end
         EOS
         File.read("path/to/backups/#{File.expand_path('input')}").must_equal <<-EOS.demargin
-          |# GEN: echo new
+          |# frag: echo new
           |old
-          |# ENDGEN
+          |# frag end
         EOS
       end
     end
@@ -210,57 +210,57 @@ describe Frag::App do
     ['-s', '--backup-suffix'].each do |option|
       it "backs up the input file with the suffix given by #{option}" do
         write_file 'input', <<-EOS.demargin
-          |# GEN: echo new
+          |# frag: echo new
           |old
-          |# ENDGEN
+          |# frag end
         EOS
         frag(option, '.backup', 'input').must_equal 0
         (output.string + error.string).must_equal ''
         File.read('input').must_equal <<-EOS.demargin
-          |# GEN: echo new
+          |# frag: echo new
           |new
-          |# ENDGEN
+          |# frag end
         EOS
         File.read('input.backup').must_equal <<-EOS.demargin
-          |# GEN: echo new
+          |# frag: echo new
           |old
-          |# ENDGEN
+          |# frag end
         EOS
       end
     end
 
     it "supports using --backup-prefix and --backup-suffix together" do
       write_file 'input', <<-EOS.demargin
-        |# GEN: echo new
+        |# frag: echo new
         |old
-        |# ENDGEN
+        |# frag end
       EOS
       frag('-p', 'path/to/backups', '-s', '.backup', 'input').must_equal 0
       (output.string + error.string).must_equal ''
       File.read('input').must_equal <<-EOS.demargin
-        |# GEN: echo new
+        |# frag: echo new
         |new
-        |# ENDGEN
+        |# frag end
       EOS
       File.read("path/to/backups/#{File.expand_path('input')}.backup").must_equal <<-EOS.demargin
-        |# GEN: echo new
+        |# frag: echo new
         |old
-        |# ENDGEN
+        |# frag end
       EOS
     end
 
     it "does not back up files which produces errors" do
       write_file 'a', <<-EOS.demargin
-        |# GEN: true
-        |# ENDGEN
+        |# frag: true
+        |# frag end
       EOS
       write_file 'b', <<-EOS.demargin
-        |# GEN: false
-        |# ENDGEN
+        |# frag: false
+        |# frag end
       EOS
       write_file 'c', <<-EOS.demargin
-        |# GEN: true
-        |# ENDGEN
+        |# frag: true
+        |# frag end
       EOS
       frag('-s', '.backup', 'a', 'b', 'c').must_equal 1
       File.exist?('a.backup').must_equal true
@@ -271,27 +271,27 @@ describe Frag::App do
 
   it "prints an error and leaves the input file unchanged if a command fails" do
     write_file 'input', <<-EOS.demargin
-      |# GEN: echo new
+      |# frag: echo new
       |old
-      |# ENDGEN
-      |# GEN: false
-      |# ENDGEN
+      |# frag end
+      |# frag: false
+      |# frag end
     EOS
     frag('input').must_equal 1
     output.string.must_equal ''
     error.string.must_match(/\b4:.*failed/)
     File.read('input').must_equal <<-EOS.demargin
-      |# GEN: echo new
+      |# frag: echo new
       |old
-      |# ENDGEN
-      |# GEN: false
-      |# ENDGEN
+      |# frag end
+      |# frag: false
+      |# frag end
     EOS
   end
 
   it "prints an error if there's an unmatched beginning line" do
     write_file 'input', <<-EOS.demargin
-      |# GEN: echo one
+      |# frag: echo one
     EOS
     frag('input').must_equal 1
     output.string.must_equal ''
@@ -300,7 +300,7 @@ describe Frag::App do
 
   it "prints an error if there's an unmatched ending line" do
     write_file 'input', <<-EOS.demargin
-      |# ENDGEN
+      |# frag end
     EOS
     frag('input').must_equal 1
     output.string.must_equal ''
@@ -309,36 +309,36 @@ describe Frag::App do
 
   it "continues processing other files if one of them produces an error" do
     write_file 'a', <<-EOS.demargin
-      |# GEN: echo new
+      |# frag: echo new
       |old
-      |# ENDGEN
+      |# frag end
     EOS
     write_file 'b', <<-EOS.demargin
-      |# GEN: false
+      |# frag: false
       |old
-      |# ENDGEN
+      |# frag end
     EOS
     write_file 'c', <<-EOS.demargin
-      |# GEN: echo new
+      |# frag: echo new
       |old
-      |# ENDGEN
+      |# frag end
     EOS
     frag('a', 'b', 'c').must_equal 1
     output.string.must_equal ''
     File.read('a').must_equal <<-EOS.demargin
-      |# GEN: echo new
+      |# frag: echo new
       |new
-      |# ENDGEN
+      |# frag end
     EOS
     File.read('b').must_equal <<-EOS.demargin
-      |# GEN: false
+      |# frag: false
       |old
-      |# ENDGEN
+      |# frag end
     EOS
     File.read('c').must_equal <<-EOS.demargin
-      |# GEN: echo new
+      |# frag: echo new
       |new
-      |# ENDGEN
+      |# frag end
     EOS
   end
 

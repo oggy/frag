@@ -1,3 +1,7 @@
+== LATEST
+
+ * Use 'frag:'...'frag end' for delimiters.
+
 == 0.0.1 2012-08-05
 
  * Hi.

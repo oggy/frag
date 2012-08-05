@@ -8,8 +8,8 @@ module Frag
       @input, @output, @error = input, output, error
       @status = 0
 
-      beginning = 'GEN:'
-      ending = 'ENDGEN'
+      beginning = 'frag:'
+      ending = 'frag end'
       leader = '#'
       trailer = ''
       @backup_prefix = @backup_suffix = nil

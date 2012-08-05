@@ -12,15 +12,15 @@ describe Frag do
   describe "when a file is frag'd successfully" do
     it "updates the file, and exits with zero status" do
       write_file 'input', <<-EOS.demargin
-        |# GEN: echo new
+        |# frag: echo new
         |old
-        |# ENDGEN
+        |# frag end
       EOS
       frag('input').must_equal 0
       File.read('input').must_equal <<-EOS.demargin
-        |# GEN: echo new
+        |# frag: echo new
         |new
-        |# ENDGEN
+        |# frag end
       EOS
     end
   end
@@ -28,21 +28,21 @@ describe Frag do
   describe "when options are used succesfully" do
     it "updates the file, and exits with zero status" do
       write_file 'input', <<-EOS.demargin
-        |# GEN: echo new
+        |# frag: echo new
         |old
-        |# ENDGEN
-        |// GEN: echo new
+        |# frag end
+        |// frag: echo new
         |old
-        |// ENDGEN
+        |// frag end
       EOS
       frag('-l', '//', 'input').must_equal 0
       File.read('input').must_equal <<-EOS.demargin
-        |# GEN: echo new
+        |# frag: echo new
         |old
-        |# ENDGEN
-        |// GEN: echo new
+        |# frag end
+        |// frag: echo new
         |new
-        |// ENDGEN
+        |// frag end
       EOS
     end
   end

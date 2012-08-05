@@ -16,14 +16,14 @@ you might want to generate your `~/.ssh/config` from a list of hosts managed by
       Hostname 123.123.123.2
       User me
 
-    # GEN: knife sshgen
-    # ENDGEN
+    # frag: knife sshgen
+    # frag end
 
 Now `frag` that file:
 
     frag ~/.ssh/config
 
-and the region delimited by the `GEN`..`ENDGEN` lines will be filled in with the
+and the region delimited by the `GEN`..`frag end` lines will be filled in with the
 output from [knife sshgen][knife-sshgen]. The delimiter lines remain, so you can
 re-`frag` anytime to bring it up to date.
 
@@ -35,15 +35,15 @@ database:
     ::1              localhost
     fe80::1%lo0      localhost
 
-    # GEN: mysql myapp -Bre 'select subdomain from sites | sed -e 's/.*/127.0.0.1 &.myapp.local/'
-    # ENDGEN
+    # frag: mysql myapp -Bre 'select subdomain from sites | sed -e 's/.*/127.0.0.1 &.myapp.local/'
+    # frag end
 
 Pipelines work - woo!
 
 Or maybe you're authoring this README and want to show all the options `frag`
 takes:
 
-<!-- GEN: echo; ruby -Ilib bin/frag --help | sed -e 's/^/    /'; echo  -->
+<!-- frag: echo; ruby -Ilib bin/frag --help | sed -e 's/^/    /'; echo  -->
 
     USAGE: bin/frag [options] file ...
         -b, --begin DELIMITER
@@ -53,7 +53,7 @@ takes:
         -p, --backup-prefix PREFIX
         -s, --backup-suffix SUFFIX
 
-<!-- ENDGEN -->
+<!-- frag end -->
 
 (Check the source... ;-)
 
