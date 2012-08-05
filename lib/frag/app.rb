@@ -49,8 +49,7 @@ module Frag
       return @status if @status != 0
       @input_paths.each do |input_path|
         manage_files(input_path) do |input, output|
-          process(input, output) or
-            return @status
+          process(input, output)
         end
       end
       @status
@@ -68,9 +67,11 @@ module Frag
 
     def manage_files(input_path)
       tempfile = nil
+      success = nil
       open(input_path) do |input|
         tempfile = Tempfile.open('frag') do |output|
-          yield input, output
+          yield input, output or
+            return
           output
         end
       end

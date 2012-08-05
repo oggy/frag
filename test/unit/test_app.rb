@@ -252,6 +252,25 @@ describe Frag::App do
         |# ENDGEN
       EOS
     end
+
+    it "does not back up files which produces errors" do
+      write_file 'a', <<-EOS.demargin
+        |# GEN: true
+        |# ENDGEN
+      EOS
+      write_file 'b', <<-EOS.demargin
+        |# GEN: false
+        |# ENDGEN
+      EOS
+      write_file 'c', <<-EOS.demargin
+        |# GEN: true
+        |# ENDGEN
+      EOS
+      frag('-s', '.backup', 'a', 'b', 'c').must_equal 1
+      File.exist?('a.backup').must_equal true
+      File.exist?('b.backup').must_equal false
+      File.exist?('c.backup').must_equal true
+    end
   end
 
   it "prints an error and leaves the input file unchanged if a command fails" do
@@ -290,5 +309,40 @@ describe Frag::App do
     frag('input').must_equal 1
     output.string.must_equal ''
     error.string.must_match(/\b1:.*unmatched/)
+  end
+
+  it "continues processing other files if one of them produces an error" do
+    write_file 'a', <<-EOS.demargin
+      |# GEN: echo new
+      |old
+      |# ENDGEN
+    EOS
+    write_file 'b', <<-EOS.demargin
+      |# GEN: false
+      |old
+      |# ENDGEN
+    EOS
+    write_file 'c', <<-EOS.demargin
+      |# GEN: echo new
+      |old
+      |# ENDGEN
+    EOS
+    frag('a', 'b', 'c').must_equal 1
+    output.string.must_equal ''
+    File.read('a').must_equal <<-EOS.demargin
+      |# GEN: echo new
+      |new
+      |# ENDGEN
+    EOS
+    File.read('b').must_equal <<-EOS.demargin
+      |# GEN: false
+      |old
+      |# ENDGEN
+    EOS
+    File.read('c').must_equal <<-EOS.demargin
+      |# GEN: echo new
+      |new
+      |# ENDGEN
+    EOS
   end
 end
