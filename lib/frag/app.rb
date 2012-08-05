@@ -66,6 +66,12 @@ module Frag
     end
 
     def manage_files(input_path)
+      File.exist?(input_path) or
+        return error "file not found: #{input_path}"
+      File.file?(input_path) or
+        return error "not a file: #{input_path}"
+      File.readable?(input_path) or
+        return error "cannot open file: #{input_path}"
       tempfile = nil
       success = nil
       open(input_path) do |input|

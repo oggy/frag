@@ -345,4 +345,32 @@ describe Frag::App do
       |# ENDGEN
     EOS
   end
+
+  it "prints an error if an input file does not exist" do
+    frag('input').must_equal 1
+    output.string.must_equal ''
+    error.string.must_match /file not found.*input/
+  end
+
+  it "prints an error if an input file is not readable" do
+    write_file 'input', ''
+    File.chmod 0, 'input'
+    frag('input').must_equal 1
+    output.string.must_equal ''
+    error.string.must_match /cannot open file.*input/
+  end
+
+  it "prints an error if an input file is not a file" do
+    Dir.mkdir 'input'
+    frag('input').must_equal 1
+    output.string.must_equal ''
+    error.string.must_match /not a file.*input/
+  end
+
+  it "prints an error if an input file is a dangling symlink" do
+    File.symlink 'missing', 'input'
+    frag('input').must_equal 1
+    output.string.must_equal ''
+    error.string.must_match /file not found.*input/
+  end
 end
