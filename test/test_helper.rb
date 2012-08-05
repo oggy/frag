@@ -23,4 +23,8 @@ MiniTest::Spec.class_eval do
     FileUtils.chdir @original_pwd
     FileUtils.rm_rf "#{ROOT}/test/tmp"
   end
+
+  def write_file(path, input)
+    open(path, 'w') { |f| f.print input }
+  end
 end

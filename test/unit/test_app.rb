@@ -3,10 +3,6 @@ require 'stringio'
 require 'tempfile'
 
 describe Frag::App do
-  def write_file(path, input)
-    open(path, 'w') { |f| f.print input }
-  end
-
   let(:input) { StringIO.new }
   let(:output) { StringIO.new }
   let(:error) { StringIO.new }

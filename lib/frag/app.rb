@@ -1,5 +1,6 @@
 require 'tempfile'
 require 'fileutils'
+require 'optparse'
 
 module Frag
   class App
