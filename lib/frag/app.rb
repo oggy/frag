@@ -11,6 +11,8 @@ module Frag
       ending = 'ENDGEN'
       leader = '#'
       trailer = ''
+      @backup_prefix = @backup_suffix = nil
+
       parser = OptionParser.new do |parser|
         parser.banner = "USAGE: #$0 [options] file ..."
 
@@ -26,11 +28,18 @@ module Frag
         parser.on '-t', '--trailer STRING' do |value|
           trailer = Regexp.escape(value)
         end
+        parser.on '-p', '--backup-prefix PREFIX' do |value|
+          @backup_prefix = value
+        end
+        parser.on '-s', '--backup-suffix SUFFIX' do |value|
+          @backup_suffix = value
+        end
       end
 
       parser.parse!(args)
       args.size > 0 or
         return error "no files given"
+
       @begin_line = Regexp.new(['^', leader, beginning, '(.*)', trailer, '$'].reject(&:empty?).join('\\s*'))
       @end_line = Regexp.new(['^', leader, ending, trailer, '$'].reject(&:empty?).join('\\s*'))
       @input_paths = args
@@ -64,6 +73,11 @@ module Frag
           yield input, output
           output
         end
+      end
+      if @backup_prefix || @backup_suffix
+        backup_path = "#{@backup_prefix}#{File.expand_path(input_path)}#{@backup_suffix}"
+        FileUtils.mkdir_p File.dirname(backup_path)
+        FileUtils.cp input_path, backup_path
       end
       FileUtils.cp tempfile.path, input_path
     end

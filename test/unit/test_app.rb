@@ -188,6 +188,72 @@ describe Frag::App do
     end
   end
 
+  describe "when the backup options are used" do
+    ['-p', '--backup-prefix'].each do |option|
+      it "backs up the input file with the prefix given by #{option}" do
+        write_file 'input', <<-EOS.demargin
+          |# GEN: echo new
+          |old
+          |# ENDGEN
+        EOS
+        frag(option, 'path/to/backups', 'input').must_equal 0
+        (output.string + error.string).must_equal ''
+        File.read('input').must_equal <<-EOS.demargin
+          |# GEN: echo new
+          |new
+          |# ENDGEN
+        EOS
+        File.read("path/to/backups/#{File.expand_path('input')}").must_equal <<-EOS.demargin
+          |# GEN: echo new
+          |old
+          |# ENDGEN
+        EOS
+      end
+    end
+
+    ['-s', '--backup-suffix'].each do |option|
+      it "backs up the input file with the suffix given by #{option}" do
+        write_file 'input', <<-EOS.demargin
+          |# GEN: echo new
+          |old
+          |# ENDGEN
+        EOS
+        frag(option, '.backup', 'input').must_equal 0
+        (output.string + error.string).must_equal ''
+        File.read('input').must_equal <<-EOS.demargin
+          |# GEN: echo new
+          |new
+          |# ENDGEN
+        EOS
+        File.read('input.backup').must_equal <<-EOS.demargin
+          |# GEN: echo new
+          |old
+          |# ENDGEN
+        EOS
+      end
+    end
+
+    it "supports using --backup-prefix and --backup-suffix together" do
+      write_file 'input', <<-EOS.demargin
+        |# GEN: echo new
+        |old
+        |# ENDGEN
+      EOS
+      frag('-p', 'path/to/backups', '-s', '.backup', 'input').must_equal 0
+      (output.string + error.string).must_equal ''
+      File.read('input').must_equal <<-EOS.demargin
+        |# GEN: echo new
+        |new
+        |# ENDGEN
+      EOS
+      File.read("path/to/backups/#{File.expand_path('input')}.backup").must_equal <<-EOS.demargin
+        |# GEN: echo new
+        |old
+        |# ENDGEN
+      EOS
+    end
+  end
+
   it "prints an error and leaves the input file unchanged if a command fails" do
     write_file 'input', <<-EOS.demargin
       |# GEN: echo new
