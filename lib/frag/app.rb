@@ -82,6 +82,8 @@ module Frag
           command = $1
           region_start = input.lineno
         when @end_line
+          region_start or
+            return error "#{input.lineno}: unmatched begin delimiter"
           output.puts `#{command}`
           if !$?.success?
             return error "#{region_start}: failed: (#{$?.exitstatus}) #{command}"
@@ -91,7 +93,7 @@ module Frag
         end
       end
       if region_start
-        return error "#{region_start}: unmatched delimiter"
+        return error "#{region_start}: unmatched end delimiter"
       end
       true
     end

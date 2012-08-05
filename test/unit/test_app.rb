@@ -188,21 +188,41 @@ describe Frag::App do
     end
   end
 
-  it "exits with an error, and leaves the input file unchanged if there's an unmatched beginning line" do
+  it "prints an error and leaves the input file unchanged if a command fails" do
     write_file 'input', <<-EOS.demargin
-      |# GEN: echo one
+      |# GEN: echo new
       |old
       |# ENDGEN
-      |# GEN: echo two
+      |# GEN: false
+      |# ENDGEN
     EOS
     frag('input').must_equal 1
     output.string.must_equal ''
-    error.string.must_match(/\b4:.*unmatched/)
+    error.string.must_match(/\b4:.*failed/)
     File.read('input').must_equal <<-EOS.demargin
-      |# GEN: echo one
+      |# GEN: echo new
       |old
       |# ENDGEN
-      |# GEN: echo two
+      |# GEN: false
+      |# ENDGEN
     EOS
+  end
+
+  it "prints an error if there's an unmatched beginning line" do
+    write_file 'input', <<-EOS.demargin
+      |# GEN: echo one
+    EOS
+    frag('input').must_equal 1
+    output.string.must_equal ''
+    error.string.must_match(/\b1:.*unmatched/)
+  end
+
+  it "prints an error if there's an unmatched ending line" do
+    write_file 'input', <<-EOS.demargin
+      |# ENDGEN
+    EOS
+    frag('input').must_equal 1
+    output.string.must_equal ''
+    error.string.must_match(/\b1:.*unmatched/)
   end
 end
