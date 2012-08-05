@@ -6,16 +6,33 @@ module Frag
     def initialize(args, input=STDIN, output=STDOUT, error=STDERR)
       @input, @output, @error = input, output, error
       @status = 0
-      @begin_line = /^\s*#\s*GEN:/
-      @end_line = /^\s*#\s*ENDGEN\s*$/
 
+      beginning = 'GEN:'
+      ending = 'ENDGEN'
+      leader = '#'
+      trailer = ''
       parser = OptionParser.new do |parser|
         parser.banner = "USAGE: #$0 [options] file ..."
+
+        parser.on '-b', '--begin TOKEN' do |value|
+          beginning = Regexp.escape(value)
+        end
+        parser.on '-e', '--end TOKEN' do |value|
+          ending = Regexp.escape(value)
+        end
+        parser.on '-l', '--leader TOKEN' do |value|
+          leader = Regexp.escape(value)
+        end
+        parser.on '-t', '--trailer TOKEN' do |value|
+          trailer = Regexp.escape(value)
+        end
       end
 
       parser.parse!(args)
       args.size > 0 or
         return error "no files given"
+      @begin_line = Regexp.new(['^', leader, beginning, '(.*)', trailer, '$'].reject(&:empty?).join('\\s*'))
+      @end_line = Regexp.new(['^', leader, ending, trailer, '$'].reject(&:empty?).join('\\s*'))
       @input_paths = args
     end
 
@@ -62,7 +79,7 @@ module Frag
         when @begin_line
           region_start.nil? or
             return error "#{input.lineno}: nested region"
-          command = $'.strip
+          command = $1
           region_start = input.lineno
         when @end_line
           output.puts `#{command}`
