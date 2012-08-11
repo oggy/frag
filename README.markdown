@@ -23,9 +23,9 @@ Now `frag` that file:
 
     frag ~/.ssh/config
 
-and the region delimited by the `GEN`..`frag end` lines will be filled in with the
-output from [knife sshgen][knife-sshgen]. The delimiter lines remain, so you can
-re-`frag` anytime to bring it up to date.
+and the fragment delimited by the `frag:`..`frag end` lines will be filled in
+with the output from [knife sshgen][knife-sshgen]. The delimiter lines remain,
+so you can re-`frag` anytime to bring it up to date.
 
 Or maybe you want your `/etc/hosts` to set a list of local subdomains from a
 database:
@@ -82,7 +82,7 @@ If you want to choose your own delimiters.
 
     frag -b 'FRAGGED BY' -e 'FRAGGED' file.txt
 
-Now your regions can look like:
+Now your fragments can look like:
 
     # FRAGGED BY ...
     ...
