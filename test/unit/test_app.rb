@@ -156,31 +156,249 @@ describe Frag::App do
     ['-t', '--trailer'].each do |option|
       it "uses the delimiter trailer given by #{option}" do
         write_file 'input', <<-EOS.demargin
-          |# frag: echo one !!
-          |# frag end !!
+          |# frag: echo one @@
+          |# frag end @@
         EOS
-        frag(option, '!!', 'input').must_equal 0
+        frag(option, '@@', 'input').must_equal 0
         (output.string + error.string).must_equal ''
         File.read('input').must_equal <<-EOS.demargin
-          |# frag: echo one !!
+          |# frag: echo one @@
           |one
-          |# frag end !!
+          |# frag end @@
         EOS
       end
     end
 
     it "supports using delimiter options together" do
       write_file 'input', <<-EOS.demargin
-        |<!-- BEGIN echo one -->
-        |<!-- END -->
+        |/* BEGIN echo one */
+        |/* END */
       EOS
-      frag('-b', 'BEGIN', '-e', 'END', '-l', '<!--', '-t', '-->', 'input').must_equal 0
+      frag('-b', 'BEGIN', '-e', 'END', '-l', '/*', '-t', '*/', 'input').must_equal 0
       (output.string + error.string).must_equal ''
       File.read('input').must_equal <<-EOS.demargin
-        |<!-- BEGIN echo one -->
+        |/* BEGIN echo one */
         |one
-        |<!-- END -->
+        |/* END */
       EOS
+    end
+  end
+
+  describe "a $frag-config line" do
+    it "honors the --begin option" do
+      write_file 'input', <<-EOS.demargin
+        |# BEGIN echo one
+        |# frag: echo one
+        |# frag end
+        |# $frag-config: --begin BEGIN
+        |# BEGIN echo one
+        |# frag: echo one
+        |# frag end
+      EOS
+      frag('input').must_equal 0
+      (output.string + error.string).must_equal ''
+      File.read('input').must_equal <<-EOS.demargin
+        |# BEGIN echo one
+        |# frag: echo one
+        |one
+        |# frag end
+        |# $frag-config: --begin BEGIN
+        |# BEGIN echo one
+        |one
+        |# frag end
+      EOS
+    end
+
+    it "honors the --end option" do
+      write_file 'input', <<-EOS.demargin
+        |# frag: echo one
+        |# END
+        |# frag end
+        |# $frag-config: --end END
+        |# frag: echo one
+        |# END
+        |# frag end
+      EOS
+      frag('input').must_equal 0
+      (output.string + error.string).must_equal ''
+      File.read('input').must_equal <<-EOS.demargin
+        |# frag: echo one
+        |one
+        |# frag end
+        |# $frag-config: --end END
+        |# frag: echo one
+        |one
+        |# END
+        |# frag end
+      EOS
+    end
+
+    it "infers the leader and trailer" do
+      write_file 'input', <<-EOS.demargin
+        |/* frag: echo one */
+        |/* frag end */
+        |/* $frag-config: */
+        |/* frag: echo one */
+        |/* frag end */
+      EOS
+      frag('input').must_equal 0
+      (output.string + error.string).must_equal ''
+      File.read('input').must_equal <<-EOS.demargin
+        |/* frag: echo one */
+        |/* frag end */
+        |/* $frag-config: */
+        |/* frag: echo one */
+        |one
+        |/* frag end */
+      EOS
+    end
+
+    it "can nullify the leader and trailer" do
+      write_file 'input', <<-EOS.demargin
+        |frag: echo one
+        |frag end
+        |$frag-config:
+        |frag: echo one
+        |frag end
+      EOS
+      frag('input').must_equal 0
+      (output.string + error.string).must_equal ''
+      File.read('input').must_equal <<-EOS.demargin
+        |frag: echo one
+        |frag end
+        |$frag-config:
+        |frag: echo one
+        |one
+        |frag end
+      EOS
+    end
+
+    it "handles trailers that start with '-', which can trick optparse" do
+      write_file 'input', <<-EOS.demargin
+        |<!-- frag: echo one -->
+        |<!-- frag end -->
+        |<!-- $frag-config: -->
+        |<!-- frag: echo one -->
+        |<!-- frag end -->
+      EOS
+      frag('input').must_equal 0
+      (output.string + error.string).must_equal ''
+      File.read('input').must_equal <<-EOS.demargin
+        |<!-- frag: echo one -->
+        |<!-- frag end -->
+        |<!-- $frag-config: -->
+        |<!-- frag: echo one -->
+        |one
+        |<!-- frag end -->
+      EOS
+    end
+
+    it "honors the --backup-prefix option" do
+      write_file 'input', <<-EOS.demargin
+        |# $frag-config: --backup-prefix path/to/backups
+        |# frag: echo new
+        |old
+        |# frag end
+      EOS
+      frag('input').must_equal 0
+      (output.string + error.string).must_equal ''
+      File.read('input').must_equal <<-EOS.demargin
+        |# $frag-config: --backup-prefix path/to/backups
+        |# frag: echo new
+        |new
+        |# frag end
+      EOS
+      File.read("path/to/backups/#{File.expand_path('input')}").must_equal <<-EOS.demargin
+        |# $frag-config: --backup-prefix path/to/backups
+        |# frag: echo new
+        |old
+        |# frag end
+      EOS
+    end
+
+    it "honors the --backup-suffix option" do
+      write_file 'input', <<-EOS.demargin
+        |# $frag-config: --backup-suffix .backup
+        |# frag: echo new
+        |old
+        |# frag end
+      EOS
+      frag('input').must_equal 0
+      (output.string + error.string).must_equal ''
+      File.read('input').must_equal <<-EOS.demargin
+        |# $frag-config: --backup-suffix .backup
+        |# frag: echo new
+        |new
+        |# frag end
+      EOS
+      File.read('input.backup').must_equal <<-EOS.demargin
+        |# $frag-config: --backup-suffix .backup
+        |# frag: echo new
+        |old
+        |# frag end
+      EOS
+    end
+
+    it "scopes options to the file it appears in" do
+      write_file 'a', <<-EOS.demargin
+        |/* $frag-config: -b BEGIN -e END */
+        |/* BEGIN echo a */
+        |/* END */
+      EOS
+      write_file 'b', <<-EOS.demargin
+        |/* BEGIN echo b */
+        |/* END */
+        |# frag: echo b
+        |# frag end
+      EOS
+      frag('a', 'b').must_equal 0
+      (output.string + error.string).must_equal ''
+      File.read('a').must_equal <<-EOS.demargin
+        |/* $frag-config: -b BEGIN -e END */
+        |/* BEGIN echo a */
+        |a
+        |/* END */
+      EOS
+      File.read('b').must_equal <<-EOS.demargin
+        |/* BEGIN echo b */
+        |/* END */
+        |# frag: echo b
+        |b
+        |# frag end
+      EOS
+    end
+
+    it "can be used more than once in a file" do
+      write_file 'input', <<-EOS.demargin
+        |// $frag-config:
+        |// frag: echo one
+        |// frag end
+        |
+        |/* $frag-config: */
+        |/* frag: echo one */
+        |/* frag end */
+      EOS
+      frag('input', '--trailer', '1').must_equal 0
+      (output.string + error.string).must_equal ''
+      File.read('input').must_equal <<-EOS.demargin
+        |// $frag-config:
+        |// frag: echo one
+        |one
+        |// frag end
+        |
+        |/* $frag-config: */
+        |/* frag: echo one */
+        |one
+        |/* frag end */
+      EOS
+    end
+
+    it "errors if there are stray arguments" do
+      write_file 'input', <<-EOS.demargin
+        |# $frag-config: arg trailer
+      EOS
+      frag('input').must_equal 1
+      (output.string + error.string).must_match /unexpected argument/
     end
   end
 
@@ -249,7 +467,7 @@ describe Frag::App do
       EOS
     end
 
-    it "does not back up files which produces errors" do
+    it "does not back up files which produce errors" do
       write_file 'a', <<-EOS.demargin
         |# frag: true
         |# frag end
