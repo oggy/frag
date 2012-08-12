@@ -184,6 +184,91 @@ describe Frag::App do
     end
   end
 
+  describe "when the backup options are used" do
+    ['-p', '--backup-prefix'].each do |option|
+      it "backs up the input file with the prefix given by #{option}" do
+        write_file 'input', <<-EOS.demargin
+          |# frag: echo new
+          |old
+          |# frag end
+        EOS
+        frag(option, 'path/to/backups', 'input').must_equal 0
+        (output.string + error.string).must_equal ''
+        File.read('input').must_equal <<-EOS.demargin
+          |# frag: echo new
+          |new
+          |# frag end
+        EOS
+        File.read("path/to/backups/#{File.expand_path('input')}").must_equal <<-EOS.demargin
+          |# frag: echo new
+          |old
+          |# frag end
+        EOS
+      end
+    end
+
+    ['-s', '--backup-suffix'].each do |option|
+      it "backs up the input file with the suffix given by #{option}" do
+        write_file 'input', <<-EOS.demargin
+          |# frag: echo new
+          |old
+          |# frag end
+        EOS
+        frag(option, '.backup', 'input').must_equal 0
+        (output.string + error.string).must_equal ''
+        File.read('input').must_equal <<-EOS.demargin
+          |# frag: echo new
+          |new
+          |# frag end
+        EOS
+        File.read('input.backup').must_equal <<-EOS.demargin
+          |# frag: echo new
+          |old
+          |# frag end
+        EOS
+      end
+    end
+
+    it "supports using --backup-prefix and --backup-suffix together" do
+      write_file 'input', <<-EOS.demargin
+        |# frag: echo new
+        |old
+        |# frag end
+      EOS
+      frag('-p', 'path/to/backups', '-s', '.backup', 'input').must_equal 0
+      (output.string + error.string).must_equal ''
+      File.read('input').must_equal <<-EOS.demargin
+        |# frag: echo new
+        |new
+        |# frag end
+      EOS
+      File.read("path/to/backups/#{File.expand_path('input')}.backup").must_equal <<-EOS.demargin
+        |# frag: echo new
+        |old
+        |# frag end
+      EOS
+    end
+
+    it "does not back up files which produce errors" do
+      write_file 'a', <<-EOS.demargin
+        |# frag: true
+        |# frag end
+      EOS
+      write_file 'b', <<-EOS.demargin
+        |# frag: false
+        |# frag end
+      EOS
+      write_file 'c', <<-EOS.demargin
+        |# frag: true
+        |# frag end
+      EOS
+      frag('-s', '.backup', 'a', 'b', 'c').must_equal 1
+      File.exist?('a.backup').must_equal true
+      File.exist?('b.backup').must_equal false
+      File.exist?('c.backup').must_equal true
+    end
+  end
+
   describe "a $frag-config line" do
     it "honors the --begin option" do
       write_file 'input', <<-EOS.demargin
@@ -399,91 +484,6 @@ describe Frag::App do
       EOS
       frag('input').must_equal 1
       (output.string + error.string).must_match /unexpected argument/
-    end
-  end
-
-  describe "when the backup options are used" do
-    ['-p', '--backup-prefix'].each do |option|
-      it "backs up the input file with the prefix given by #{option}" do
-        write_file 'input', <<-EOS.demargin
-          |# frag: echo new
-          |old
-          |# frag end
-        EOS
-        frag(option, 'path/to/backups', 'input').must_equal 0
-        (output.string + error.string).must_equal ''
-        File.read('input').must_equal <<-EOS.demargin
-          |# frag: echo new
-          |new
-          |# frag end
-        EOS
-        File.read("path/to/backups/#{File.expand_path('input')}").must_equal <<-EOS.demargin
-          |# frag: echo new
-          |old
-          |# frag end
-        EOS
-      end
-    end
-
-    ['-s', '--backup-suffix'].each do |option|
-      it "backs up the input file with the suffix given by #{option}" do
-        write_file 'input', <<-EOS.demargin
-          |# frag: echo new
-          |old
-          |# frag end
-        EOS
-        frag(option, '.backup', 'input').must_equal 0
-        (output.string + error.string).must_equal ''
-        File.read('input').must_equal <<-EOS.demargin
-          |# frag: echo new
-          |new
-          |# frag end
-        EOS
-        File.read('input.backup').must_equal <<-EOS.demargin
-          |# frag: echo new
-          |old
-          |# frag end
-        EOS
-      end
-    end
-
-    it "supports using --backup-prefix and --backup-suffix together" do
-      write_file 'input', <<-EOS.demargin
-        |# frag: echo new
-        |old
-        |# frag end
-      EOS
-      frag('-p', 'path/to/backups', '-s', '.backup', 'input').must_equal 0
-      (output.string + error.string).must_equal ''
-      File.read('input').must_equal <<-EOS.demargin
-        |# frag: echo new
-        |new
-        |# frag end
-      EOS
-      File.read("path/to/backups/#{File.expand_path('input')}.backup").must_equal <<-EOS.demargin
-        |# frag: echo new
-        |old
-        |# frag end
-      EOS
-    end
-
-    it "does not back up files which produce errors" do
-      write_file 'a', <<-EOS.demargin
-        |# frag: true
-        |# frag end
-      EOS
-      write_file 'b', <<-EOS.demargin
-        |# frag: false
-        |# frag end
-      EOS
-      write_file 'c', <<-EOS.demargin
-        |# frag: true
-        |# frag end
-      EOS
-      frag('-s', '.backup', 'a', 'b', 'c').must_equal 1
-      File.exist?('a.backup').must_equal true
-      File.exist?('b.backup').must_equal false
-      File.exist?('c.backup').must_equal true
     end
   end
 
