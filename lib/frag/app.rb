@@ -12,7 +12,11 @@ module Frag
 
       @state = State.new('frag:', 'frag end', '#', '', nil, nil)
 
-      parser.parse!(args)
+      begin
+        parser.parse!(args)
+      rescue OptionParser::InvalidOption => e
+        return error e.message
+      end
       args.size > 0 || @version_printed or
         return error "no files given"
 
@@ -100,7 +104,7 @@ module Frag
           def parse_subconfig!(args)
             self.parsing_subconfig = true
             # OptionParser will error on an argument like like "-->".
-            if args.last =~ /\A--?(?:\W|\z)/
+            if args.last =~ /\A--?(?:[^0-9a-zA-Z]|\z)/
               last_arg = args.pop
               parse!(args)
               args << last_arg
@@ -164,7 +168,11 @@ module Frag
           output.puts line
         when /\A\s*(?:(\S+)\s*)?\$frag-config:\s*(.*)$/
           args = Shellwords.shellsplit($2)
-          parser.parse_subconfig!(args)
+          begin
+            parser.parse_subconfig!(args)
+          rescue OptionParser::InvalidOption => e
+            return error "#{input.lineno}: #{e.message}"
+          end
           args.size <= 1 or
             return error "#{input.lineno}: unexpected argument(s): #{args[0..-2].join(' ')}"
           @state.leader = $1 || ''

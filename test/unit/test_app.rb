@@ -371,6 +371,7 @@ describe Frag::App do
         |# $frag-config: --leader %
       EOS
       frag('input').must_equal 0
+      output.string.must_equal ''
       error.string.must_equal "warning: -l / --leader is unnecessary in $frag-config line\n"
     end
 
@@ -379,6 +380,7 @@ describe Frag::App do
         |# $frag-config: --trailer %
       EOS
       frag('input').must_equal 0
+      output.string.must_equal ''
       error.string.must_equal "warning: -t / --trailer is unnecessary in $frag-config line\n"
     end
 
@@ -502,12 +504,22 @@ describe Frag::App do
       EOS
     end
 
+    it "errors if there is an invalid option" do
+      write_file 'input', <<-EOS.demargin
+        |# $frag-config: --invalid x
+      EOS
+      frag('input').must_equal 1
+      output.string.must_equal ''
+      error.string.must_match /invalid option: --invalid/
+    end
+
     it "errors if there are stray arguments" do
       write_file 'input', <<-EOS.demargin
         |# $frag-config: arg trailer
       EOS
       frag('input').must_equal 1
-      (output.string + error.string).must_match /unexpected argument/
+      output.string.must_equal ''
+      error.string.must_match /unexpected argument/
     end
   end
 
@@ -582,6 +594,12 @@ describe Frag::App do
       |new
       |# frag end
     EOS
+  end
+
+  it "prints an error if an invalid option is given" do
+    frag('--invalid').must_equal 1
+    output.string.must_equal ''
+    error.string.must_match /invalid option: --invalid/
   end
 
   it "prints an error if an input file does not exist" do
