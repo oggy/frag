@@ -8,11 +8,12 @@ module Frag
     def initialize(args, input=STDIN, output=STDOUT, error=STDERR)
       @input, @output, @error = input, output, error
       @status = 0
+      @version_printed = false
 
       @state = State.new('frag:', 'frag end', '#', '', nil, nil)
 
       parser.parse!(args)
-      args.size > 0 or
+      args.size > 0 || @version_printed or
         return error "no files given"
 
       @input_paths = args
@@ -62,6 +63,10 @@ module Frag
         end
         parser.on '-s', '--backup-suffix SUFFIX', "Back up original files with the given suffix." do |value|
           @state.backup_suffix = value
+        end
+        parser.on '-v', '--version', "" do
+          @output.puts "Frag version #{Frag::VERSION}"
+          @version_printed = true
         end
 
         parser.separator <<-EOS.gsub(/^ *\|/, '')

@@ -487,6 +487,14 @@ describe Frag::App do
     end
   end
 
+  ['-v', '--version'].each do |option|
+    it "prints the version if the #{option} option is given" do
+      frag(option).must_equal 0
+      output.string.must_equal "Frag version #{Frag::VERSION}\n"
+      error.string.must_equal ''
+    end
+  end
+
   it "prints an error and leaves the input file unchanged if a command fails" do
     write_file 'input', <<-EOS.demargin
       |# frag: echo new
