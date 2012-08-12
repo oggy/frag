@@ -1,4 +1,4 @@
-== LATEST
+== 0.2.0 2012-08-11
 
  * Allow setting options in the file itself via $frag-config lines.
  * Fix error messages about missing delimters.
