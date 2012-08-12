@@ -51,7 +51,7 @@ module Frag
         parser.on '-e', '--end DELIMITER', "Delimiter that ends each generated fragment. Default: 'frag end'" do |value|
           @state.ending = value
         end
-        parser.on '-l', '--leader STRING', "String that preceeds each begin or end delimiter. Default: '#'" do |value|
+        parser.on '-l', '--leader STRING', "String that precedes each begin or end delimiter. Default: '#'" do |value|
           @state.leader = value
         end
         parser.on '-t', '--trailer STRING', "String that succeeds each begin or end delimiter. Default: ''" do |value|
@@ -66,7 +66,7 @@ module Frag
 
         parser.separator <<-EOS.gsub(/^ *\|/, '')
           |
-          |Embedding options:
+          |## Embedded options
           |
           |Options may also be embedded in the file itself via a line that
           |contains "$frag-config:". Example:
