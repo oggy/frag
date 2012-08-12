@@ -592,10 +592,18 @@ describe Frag::App do
 
   it "prints an error if an input file is not readable" do
     write_file 'input', ''
-    File.chmod 0, 'input'
+    File.chmod 0300, 'input'
     frag('input').must_equal 1
     output.string.must_equal ''
-    error.string.must_match /cannot open file.*input/
+    error.string.must_match /cannot read file.*input/
+  end
+
+  it "prints an error if an input file is not writable" do
+    write_file 'input', ''
+    File.chmod 0500, 'input'
+    frag('input').must_equal 1
+    output.string.must_equal ''
+    error.string.must_match /cannot write file.*input/
   end
 
   it "prints an error if an input file is not a file" do

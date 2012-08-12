@@ -1,3 +1,7 @@
+== LATEST
+
+ * Gracefully exit if file is not writable.
+
 == 0.2.0 2012-08-11
 
  * Allow setting options in the file itself via $frag-config lines.
