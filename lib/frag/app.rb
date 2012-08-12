@@ -43,25 +43,41 @@ module Frag
     def parser
       @parser ||= OptionParser.new do |parser|
         parser.banner = "USAGE: #$0 [options] file ..."
+        parser.separator "\nOptions:"
 
-        parser.on '-b', '--begin DELIMITER' do |value|
+        parser.on '-b', '--begin DELIMITER', "Delimiter that begins each generated fragment. Default: 'frag:'" do |value|
           @state.beginning = value
         end
-        parser.on '-e', '--end DELIMITER' do |value|
+        parser.on '-e', '--end DELIMITER', "Delimiter that ends each generated fragment. Default: 'frag end'" do |value|
           @state.ending = value
         end
-        parser.on '-l', '--leader STRING' do |value|
+        parser.on '-l', '--leader STRING', "String that preceeds each begin or end delimiter. Default: '#'" do |value|
           @state.leader = value
         end
-        parser.on '-t', '--trailer STRING' do |value|
+        parser.on '-t', '--trailer STRING', "String that succeeds each begin or end delimiter. Default: ''" do |value|
           @state.trailer = value
         end
-        parser.on '-p', '--backup-prefix PREFIX' do |value|
+        parser.on '-p', '--backup-prefix PREFIX', "Back up original files with the given prefix. May be a directory." do |value|
           @state.backup_prefix = value
         end
-        parser.on '-s', '--backup-suffix SUFFIX' do |value|
+        parser.on '-s', '--backup-suffix SUFFIX', "Back up original files with the given suffix." do |value|
           @state.backup_suffix = value
         end
+
+        parser.separator <<-EOS.gsub(/^ *\|/, '')
+          |
+          |Embedding options:
+          |
+          |Options may also be embedded in the file itself via a line that
+          |contains "$frag-config:". Example:
+          |
+          |    <!-- $frag-config: -p ~/.frag-backups/ -->
+          |
+          |Note that the leader and trailer are always taken from the strings
+          |that preceed the "$frag-config" and succeed the last option
+          |respectively. They need not be set with --leader and --trailer.
+          |
+        EOS
 
         def parser.parse_subconfig!(args)
           # OptionParser will error on an argument like like "-->".
