@@ -8,7 +8,7 @@ Gem::Specification.new do |gem|
   gem.authors       = ['George Ogata']
   gem.email         = ['george.ogata@gmail.com']
   gem.license       = 'MIT'
-  gem.summary       = "Generate regions of files from the output of shell commands."
+  gem.summary       = "Generate fragments of files from shell commands."
   gem.homepage      = 'http://github.com/oggy/frag'
 
   gem.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
