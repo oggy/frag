@@ -41,6 +41,10 @@ module Frag
       false
     end
 
+    def warn(message)
+      @error.puts "warning: #{message}"
+    end
+
     def parser
       @parser ||= OptionParser.new do |parser|
         parser.banner = "USAGE: #$0 [options] file ..."
@@ -53,9 +57,15 @@ module Frag
           @state.ending = value
         end
         parser.on '-l', '--leader STRING', "String that precedes each begin or end delimiter. Default: '#'" do |value|
+          if parser.parsing_subconfig
+            warn "-l / --leader is unnecessary in $frag-config line"
+          end
           @state.leader = value
         end
         parser.on '-t', '--trailer STRING', "String that succeeds each begin or end delimiter. Default: ''" do |value|
+          if parser.parsing_subconfig
+            warn "-t / --trailer is unnecessary in $frag-config line"
+          end
           @state.trailer = value
         end
         parser.on '-p', '--backup-prefix PREFIX', "Back up original files with the given prefix. May be a directory." do |value|
@@ -84,14 +94,21 @@ module Frag
           |
         EOS
 
-        def parser.parse_subconfig!(args)
-          # OptionParser will error on an argument like like "-->".
-          if args.last =~ /\A--?(?:\W|\z)/
-            last_arg = args.pop
-            parse!(args)
-            args << last_arg
-          else
-            parse!(args)
+        class << parser
+          attr_accessor :parsing_subconfig
+
+          def parse_subconfig!(args)
+            self.parsing_subconfig = true
+            # OptionParser will error on an argument like like "-->".
+            if args.last =~ /\A--?(?:\W|\z)/
+              last_arg = args.pop
+              parse!(args)
+              args << last_arg
+            else
+              parse!(args)
+            end
+          ensure
+            self.parsing_subconfig = false
           end
         end
       end

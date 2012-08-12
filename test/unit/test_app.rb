@@ -269,6 +269,14 @@ describe Frag::App do
     end
   end
 
+  ['-v', '--version'].each do |option|
+    it "prints the version if the #{option} option is given" do
+      frag(option).must_equal 0
+      output.string.must_equal "Frag version #{Frag::VERSION}\n"
+      error.string.must_equal ''
+    end
+  end
+
   describe "a $frag-config line" do
     it "honors the --begin option" do
       write_file 'input', <<-EOS.demargin
@@ -356,6 +364,22 @@ describe Frag::App do
         |one
         |frag end
       EOS
+    end
+
+    it "warns if the leader is set via an option" do
+      write_file 'input', <<-EOS.demargin
+        |# $frag-config: --leader %
+      EOS
+      frag('input').must_equal 0
+      error.string.must_equal "warning: -l / --leader is unnecessary in $frag-config line\n"
+    end
+
+    it "warns if the trailer is set via an option" do
+      write_file 'input', <<-EOS.demargin
+        |# $frag-config: --trailer %
+      EOS
+      frag('input').must_equal 0
+      error.string.must_equal "warning: -t / --trailer is unnecessary in $frag-config line\n"
     end
 
     it "handles trailers that start with '-', which can trick optparse" do
@@ -484,14 +508,6 @@ describe Frag::App do
       EOS
       frag('input').must_equal 1
       (output.string + error.string).must_match /unexpected argument/
-    end
-  end
-
-  ['-v', '--version'].each do |option|
-    it "prints the version if the #{option} option is given" do
-      frag(option).must_equal 0
-      output.string.must_equal "Frag version #{Frag::VERSION}\n"
-      error.string.must_equal ''
     end
   end
 
